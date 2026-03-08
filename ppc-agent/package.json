@@ -1,0 +1,43 @@
+{
+  "name": "ppc-intelligence-agent",
+  "version": "1.0.0",
+  "description": "Marketing Intelligence Agent - Autonomous PPC, Content, CRM & Attribution powered by Claude",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "setup": "node setup-env.js",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "campaign": "tsx src/run-campaign-builder.ts",
+    "webhook-server": "tsx src/webhook-server.ts",
+    "ops:process": "node dist/index.js ops:process",
+    "ops:daemon": "node dist/index.js ops:daemon",
+    "content:newsletter": "node dist/index.js content:newsletter",
+    "content:plan": "node dist/index.js content:plan",
+    "content:social": "node dist/index.js content:social",
+    "meta:create": "node dist/index.js meta:create",
+    "meta:report": "node dist/index.js meta:report",
+    "report:daily": "node dist/index.js report:daily",
+    "report:weekly": "node dist/index.js report:weekly",
+    "report:sync": "node dist/index.js report:sync",
+    "report:alerts": "node dist/index.js report:alerts",
+    "report:attribution": "node dist/index.js report:attribution",
+    "daily-tasks": "node dist/index.js daily-tasks"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.4.5",
+    "google-ads-api": "^22.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

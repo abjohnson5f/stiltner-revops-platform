@@ -1,0 +1,164 @@
+"use client"
+
+import * as React from "react"
+import { AlertCircle, CheckCircle2, TrendingDown, DollarSign, MousePointer2 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { agentApi } from "@/lib/agent"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
+
+const LOADING_STEPS = [
+  "Connecting to Google Ads...",
+  "Analyzing Keyword Performance...",
+  "Calculating Wasted Spend...",
+  "Generating Recommendations...",
+  "Finalizing Report..."
+]
+
+export default function HealthCheckPage() {
+  const [loading, setLoading] = React.useState(false)
+  const [data, setData] = React.useState<any>(null)
+  const [error, setError] = React.useState<string | null>(null)
+  
+  // Progress State
+  const [progressStep, setProgressStep] = React.useState(0)
+
+  // Progress Interval
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      setProgressStep(0)
+      interval = setInterval(() => {
+        setProgressStep(prev => {
+          if (prev >= LOADING_STEPS.length - 1) return prev;
+          return prev + 1;
+        })
+      }, 3000) // Advance step every 3s
+    }
+    return () => clearInterval(interval)
+  }, [loading])
+
+  const runAudit = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await agentApi.runHealthCheck()
+      if (!res.success) throw new Error(res.error)
+      setData(res.data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Health check failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Initial load
+  React.useEffect(() => {
+    runAudit()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Account Health</h2>
+          <Button disabled>Running Audit...</Button>
+        </div>
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-semibold">Analyzing Account Data...</h3>
+            <p className="text-muted-foreground max-w-md">
+              The AI is reviewing your campaigns, keywords, and search terms. 
+              This typically takes 1-2 minutes to ensure a comprehensive audit.
+            </p>
+          </div>
+          <div className="w-full max-w-md space-y-3 pt-6">
+             {LOADING_STEPS.map((stepLabel, idx) => {
+               const isActive = idx === progressStep;
+               const isCompleted = idx < progressStep;
+               const isPending = idx > progressStep;
+               
+               return (
+                 <div key={idx} className={`flex items-center gap-3 text-sm transition-all duration-500 ${isPending ? 'opacity-30' : 'opacity-100'}`}>
+                    <div className={`
+                        h-5 w-5 rounded-full flex items-center justify-center border
+                        ${isCompleted ? 'bg-green-600 border-green-600 text-white' : ''}
+                        ${isActive ? 'border-green-500 text-green-500 animate-pulse' : ''}
+                        ${isPending ? 'border-muted-foreground' : ''}
+                    `}>
+                        {isCompleted && <CheckCircle2 size={12} />}
+                        {isActive && <div className="h-2 w-2 bg-green-500 rounded-full" />}
+                    </div>
+                    <span className={isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}>
+                        {stepLabel}
+                    </span>
+                 </div>
+               )
+             })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <Alert variant="destructive" className="max-w-xl mx-auto mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <Button onClick={runAudit}>Try Again</Button>
+      </div>
+    )
+  }
+
+  // Default empty state if no data yet
+  if (!data) return null
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Account Health</h2>
+        <Button onClick={runAudit} disabled={loading}>Run New Audit</Button>
+      </div>
+
+      {/* Main Analysis Text */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Analysis</CardTitle>
+          <CardDescription>Generated by Claude (Latest Model)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MarkdownRenderer content={data.response || JSON.stringify(data, null, 2)} />
+        </CardContent>
+      </Card>
+
+      {/* Tool Calls (Data Evidence) */}
+      {data.toolCalls && data.toolCalls.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Sources</CardTitle>
+            <CardDescription>Tools used during analysis</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {data.toolCalls.map((call: any, i: number) => (
+                <div key={i} className="bg-muted/50 p-4 rounded-lg">
+                  <div className="font-medium text-sm mb-2 font-mono">{call.tool}</div>
+                  <pre className="text-xs overflow-auto max-h-40 bg-black/10 dark:bg-black/30 p-2 rounded">
+                    {JSON.stringify(call.result, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

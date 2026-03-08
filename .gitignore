@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+build/
+.astro/
+.next/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+**/.*tokens*.json
+**/*credentials*.json
+**/*secret*.json
+
+# IDE & editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Test & coverage
+coverage/
+test-results/
+.nyc_output/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Temporary
+tmp/
+temp/
